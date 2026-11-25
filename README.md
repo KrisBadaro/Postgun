@@ -1,2 +1,2 @@
 # Postgun
-
+O principal Intuito dessa plataforma é ajudar criadores de conteúdos a complementarem suas ideias de posts, terem mais organização e facilidade para editar os vídeos. Criadores de vídeos curtos, estilo reels e cortes.

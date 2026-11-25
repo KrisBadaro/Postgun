@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PostGun — Estúdio Criativo & Organização com IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
+  <!-- =========================================================
+       TELA DE LOGIN E CADASTRO (PRIMEIRO ACESSO)
+  ========================================================== -->
+  <section id="auth-screen" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-badge">✦</div>
+        <h1 class="brand-title">PostGun</h1>
+        <p class="brand-subtitle">Seu ateliê inteligente de ideias, roteiros e vídeos curtos</p>
+      </div>
+
+      <div class="auth-tabs">
+        <button type="button" class="auth-tab active" data-auth-tab="login">Entrar</button>
+        <button type="button" class="auth-tab" data-auth-tab="register">Criar conta</button>
+      </div>
+
+      <!-- Formulário de Login -->
+      <form id="login-form" class="auth-form active">
+        <div class="form-group">
+          <label for="login-email">E-mail</label>
+          <input type="email" id="login-email" placeholder="voce@exemplo.com" required />
+        </div>
+        <div class="form-group">
+          <label for="login-password">Senha</label>
+          <input type="password" id="login-password" placeholder="••••••••" required />
+        </div>
+        <div class="form-row-between">
+          <label class="checkbox-inline">
+            <input type="checkbox" checked /> Lembrar meu acesso
+          </label>
+          <a href="#" class="link-soft">Esqueci a senha</a>
+        </div>
+        <button type="submit" class="btn-primary btn-full">Entrar no meu estúdio</button>
+      </form>
+
+      <!-- Formulário de Cadastro -->
+      <form id="register-form" class="auth-form">
+        <div class="form-group">
+          <label for="reg-name">Seu nome ou @ do perfil</label>
+          <input type="text" id="reg-name" placeholder="Ex: Camila Rocha (@camilarocha)" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-niche">Nicho principal</label>
+          <select id="reg-niche" required>
+            <option value="Beleza & Autocuidado">Beleza & Autocuidado</option>
+            <option value="Moda & Estilo">Moda & Estilo</option>
+            <option value="Lifestyle & Rotina">Lifestyle & Rotina</option>
+            <option value="Negócios & Carreira">Negócios & Carreira</option>
+            <option value="Bem-estar & Fitness">Bem-estar & Fitness</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="reg-email">E-mail</label>
+          <input type="email" id="reg-email" placeholder="voce@exemplo.com" required />
+        </div>
+        <div class="form-group">
+          <label for="reg-password">Crie uma senha</label>
+          <input type="password" id="reg-password" placeholder="Mínimo 6 caracteres" required />
+        </div>
+        <button type="submit" class="btn-primary btn-full">Criar minha conta gratuitamente</button>
+      </form>
+
+      <p id="auth-feedback" class="auth-feedback"></p>
+    </div>
+  </section>
+
+  <!-- =========================================================
+       APLICAÇÃO PRINCIPAL (DASHBOARD)
+  ========================================================== -->
+  <div id="app-shell" class="app-shell hidden">
+    
+    <!-- Menu Lateral -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <span class="brand-badge small">✦</span>
+        <div>
+          <h2 class="sidebar-logo">PostGun</h2>
+          <span class="sidebar-tag">Creator Studio AI</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-view="home">
+          <span class="nav-icon">⌂</span> Tela Inicial
+        </button>
+        <button class="nav-item" data-view="vault">
+          <span class="nav-icon">✧</span> Baú de Ideias
+        </button>
+        <button class="nav-item" data-view="production">
+          <span class="nav-icon">▤</span> Produção
+        </button>
+        <button class="nav-item" data-view="calendar">
+          <span class="nav-icon">◫</span> Calendário
+        </button>
+        <button class="nav-item" data-view="editor">
+          <span class="nav-icon">✂</span> Editor de Vídeos
+        </button>
+        <button class="nav-item" data-view="results">
+          <span class="nav-icon">◔</span> Resultados
+        </button>
+        <button class="nav-item" data-view="ai-assistant">
+          <span class="nav-icon">✦</span> Assistente de IA
+        </button>
+        <button class="nav-item" data-view="settings">
+          <span class="nav-icon">⚙</span> Configurações
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-pill">
+          <div class="user-avatar" id="user-avatar-initials">CR</div>
+          <div class="user-meta">
+            <strong id="user-display-name">Criadora</strong>
+            <span id="user-display-niche">Lifestyle & Beleza</span>
+          </div>
+        </div>
+        <button id="logout-btn" class="btn-ghost btn-full">Sair</button>
+      </div>
+    </aside>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+
+      <!-- =====================================================
+           1. TELA INICIAL
+      ====================================================== -->
+      <section id="view-home" class="page-view active">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Visão Geral do Estúdio</span>
+            <h1>Olá, <span id="welcome-name">Criadora</span> ✨</h1>
+          </div>
+          <button class="btn-primary" id="btn-open-idea-modal">+ Nova ideia no Baú</button>
+        </header>
+
+        <!-- Resumo de Constância, Produção e Baú -->
+        <div class="kpi-grid-3">
+          <div class="card kpi-card highlight-soft">
+            <span class="kpi-label">Constância de Postagem</span>
+            <strong class="kpi-value">4x / semana</strong>
+            <span class="kpi-note">12 dias seguidos mantendo o ritmo</span>
+          </div>
+          <div class="card kpi-card">
+            <span class="kpi-label">Vídeos em Produção</span>
+            <strong class="kpi-value" id="home-prod-count">6 vídeos</strong>
+            <span class="kpi-note">2 sem edição · 2 editando · 2 finalizados</span>
+          </div>
+          <div class="card kpi-card">
+            <span class="kpi-label">Ideias no Baú</span>
+            <strong class="kpi-value" id="home-vault-count">14 ideias</strong>
+            <span class="kpi-note">Todas organizadas por nicho e revisadas pela IA</span>
+          </div>
+        </div>
+
+        <!-- Próximo Post Agendado -->
+        <div class="card next-post-banner">
+          <div class="next-post-info">
+            <span class="pill-niche">Próximo Post Agendado</span>
+            <h2>"Arrume-se comigo para um café da manhã produtivo + 3 hábitos"</h2>
+            <div class="next-post-meta">
+              <span><strong>Data:</strong> Quinta-feira, 26 Nov às 18:30</span>
+              <span><strong>Nicho:</strong> Lifestyle & Rotina</span>
+              <span><strong>Redes:</strong> Instagram Reels, TikTok, YouTube Shorts</span>
+            </div>
+          </div>
+          <div class="next-post-actions">
+            <button class="btn-secondary" data-jump="calendar">Ver no Calendário</button>
+            <button class="btn-primary" data-jump="editor">Abrir no Editor</button>
+          </div>
+        </div>
+
+        <!-- Gerenciamento das Redes Sociais Conectadas -->
+        <div class="section-heading">
+          <h3>Redes Sociais Conectadas</h3>
+          <span class="muted-text">Métricas atualizadas automaticamente</span>
+        </div>
+
+        <div class="social-cards-grid">
+          <article class="card social-card">
+            <div class="social-card-top">
+              <span class="social-badge ig">Instagram Reels</span>
+              <span class="status-dot connected">Conectado</span>
+            </div>
+            <div class="social-stats">
+              <div>
+                <small>Seguidores</small>
+                <strong>48,2 mil</strong>
+              </div>
+              <div>
+                <small>Média / vídeo</small>
+                <strong>19.400 views</strong>
+              </div>
+            </div>
+            <div class="social-last-post">
+              <span>Último post: <strong>23/11/2026</strong></span>
+              <span>Formato: <strong>Reels (Tutorial 35s)</strong></span>
+            </div>
+          </article>
+
+          <article class="card social-card">
+            <div class="social-card-top">
+              <span class="social-badge tt">TikTok</span>
+              <span class="status-dot connected">Conectado</span>
+            </div>
+            <div class="social-stats">
+              <div>
+                <small>Seguidores</small>
+                <strong>82,9 mil</strong>
+              </div>
+              <div>
+                <small>Média / vídeo</small>
+                <strong>34.100 views</strong>
+              </div>
+            </div>
+            <div class="social-last-post">
+              <span>Último post: <strong>24/11/2026</strong></span>
+              <span>Formato: <strong>Vídeo Curto / Corte (42s)</strong></span>
+            </div>
+          </article>
+
+          <article class="card social-card">
+            <div class="social-card-top">
+              <span class="social-badge yt">YouTube Shorts</span>
+              <span class="status-dot connected">Conectado</span>
+            </div>
+            <div class="social-stats">
+              <div>
+                <small>Inscritos</small>
+                <strong>21,5 mil</strong>
+              </div>
+              <div>
+                <small>Média / vídeo</small>
+                <strong>12.800 views</strong>
+              </div>
+            </div>
+            <div class="social-last-post">
+              <span>Último post: <strong>21/11/2026</strong></span>
+              <span>Formato: <strong>Short Narrado (50s)</strong></span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           2. BAÚ DE IDEIAS
+      ====================================================== -->
+      <section id="view-vault" class="page-view">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Inspirações & Roteiros</span>
+            <h1>Baú de Ideias</h1>
+          </div>
+          <div class="header-actions">
+            <select id="vault-filter-niche" class="input-compact">
+              <option value="all">Todos os nichos</option>
+              <option value="Beleza & Autocuidado">Beleza & Autocuidado</option>
+              <option value="Moda & Estilo">Moda & Estilo</option>
+              <option value="Lifestyle & Rotina">Lifestyle & Rotina</option>
+            </select>
+            <button class="btn-primary" id="btn-open-idea-modal-2">+ Escrever nova ideia</button>
+          </div>
+        </header>
+
+        <div id="vault-list" class="vault-grid">
+          <!-- Card de Ideia 1 -->
+          <article class="card idea-card" data-niche="Beleza & Autocuidado">
+            <div class="idea-header">
+              <span class="pill-niche">Beleza & Autocuidado</span>
+              <span class="idea-date">Criada em 24/11/2026</span>
+            </div>
+            <div class="idea-block raw">
+              <small>Seu rascunho original:</small>
+              <p>"fazer um video mostrando os 3 produtos que eu mais uso qdo acordo atrasada e preciso parecer arrumada rapido"</p>
+            </div>
+            <div class="idea-block ai-adapted">
+              <small>✦ Adaptação & Modelo de Produção (IA):</small>
+              <p><strong>Texto corrigido:</strong> "Os 3 produtos indispensáveis quando acordo atrasada e preciso estar pronta em 5 minutos."</p>
+              <ul>
+                <li><strong>Gancho (0–3s):</strong> Close no relógio + transição rápida aplicando corretivo.</li>
+                <li><strong>Estrutura:</strong> Corte seco a cada produto (15s total) + áudio tendência suave.</li>
+                <li><strong>CTA:</strong> "Qual desses nunca falta na sua nécessaire?"</li>
+              </ul>
+            </div>
+            <div class="idea-footer">
+              <button class="btn-secondary btn-sm">Enviar para Produção</button>
+            </div>
+          </article>
+
+          <!-- Card de Ideia 2 -->
+          <article class="card idea-card" data-niche="Moda & Estilo">
+            <div class="idea-header">
+              <span class="pill-niche">Moda & Estilo</span>
+              <span class="idea-date">Criada em 22/11/2026</span>
+            </div>
+            <div class="idea-block raw">
+              <small>Seu rascunho original:</small>
+              <p>"mostrar como usar a mesma camisa branca de 3 jeitos diferentes pro trabalho, almoco e jantar"</p>
+            </div>
+            <div class="idea-block ai-adapted">
+              <small>✦ Adaptação & Modelo de Produção (IA):</small>
+              <p><strong>Texto corrigido:</strong> "1 camisa branca, 3 ocasiões: do escritório ao jantar sem trocar a peça principal."</p>
+              <ul>
+                <li><strong>Gancho (0–3s):</strong> Estalo de dedos trocando o look completo no mesmo enquadramento.</li>
+                <li><strong>Estrutura:</strong> Legenda fixa no topo indicando o horário de cada look.</li>
+                <li><strong>CTA:</strong> "Salva esse vídeo para multiplicar seu guarda-roupa!"</li>
+              </ul>
+            </div>
+            <div class="idea-footer">
+              <button class="btn-secondary btn-sm">Enviar para Produção</button>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           3. PRODUÇÃO (SEM EDIÇÃO, EDITANDO, FINALIZADO)
+      ====================================================== -->
+      <section id="view-production" class="page-view">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Esteira Criativa</span>
+            <h1>Produção de Vídeos</h1>
+          </div>
+          <span class="muted-text">A IA analisa seus clipes e sugere melhorias de retenção</span>
+        </header>
+
+        <div class="kanban-grid">
+          <!-- Coluna 1: Sem edição -->
+          <div class="kanban-column">
+            <div class="kanban-col-header">
+              <h3>Sem edição</h3>
+              <span class="count-badge">2</span>
+            </div>
+            <div class="card prod-card">
+              <span class="pill-niche">Lifestyle & Rotina</span>
+              <h4>Vlog rápido: Manhã de domingo</h4>
+              <p class="ai-tip">✦ <strong>Sugestão da IA:</strong> Cortar os primeiros 4s silenciosos e iniciar direto servindo o café.</p>
+              <button class="btn-primary btn-sm btn-send-editor" data-video-title="Vlog rápido: Manhã de domingo">Puxar para Editor</button>
+            </div>
+            <div class="card prod-card">
+              <span class="pill-niche">Beleza</span>
+              <h4>Testando blush cremoso viral</h4>
+              <p class="ai-tip">✦ <strong>Sugestão da IA:</strong> Adicionar zoom suave na aplicação para destacar a textura.</p>
+              <button class="btn-primary btn-sm btn-send-editor" data-video-title="Testando blush cremoso viral">Puxar para Editor</button>
+            </div>
+          </div>
+
+          <!-- Coluna 2: Editando -->
+          <div class="kanban-column">
+            <div class="kanban-col-header">
+              <h3>Editando</h3>
+              <span class="count-badge">2</span>
+            </div>
+            <div class="card prod-card editing">
+              <span class="status-tag editing">Em edição</span>
+              <h4>3 erros ao montar looks neutros</h4>
+              <p class="ai-tip">✦ <strong>Sugestão da IA:</strong> Legendas dinâmicas em off-white aumentam em 22% a leitura.</p>
+              <button class="btn-secondary btn-sm btn-send-editor" data-video-title="3 erros ao montar looks neutros">Continuar no Editor</button>
+            </div>
+            <div class="card prod-card editing">
+              <span class="status-tag editing">Em edição</span>
+              <h4>Organizando minha penteadeira</h4>
+              <p class="ai-tip">✦ <strong>Sugestão da IA:</strong> Acelerar trechos de limpeza em 1.5x com som ASMR.</p>
+              <button class="btn-secondary btn-sm btn-send-editor" data-video-title="Organizando minha penteadeira">Continuar no Editor</button>
+            </div>
+          </div>
+
+          <!-- Coluna 3: Finalizado -->
+          <div class="kanban-column">
+            <div class="kanban-col-header">
+              <h3>Finalizado</h3>
+              <span class="count-badge">2</span>
+            </div>
+            <div class="card prod-card done">
+              <span class="status-tag done">Editado · Pronto para postar</span>
+              <h4>Arrume-se comigo para café produtivo</h4>
+              <p class="ai-tip">✦ <strong>Diagnóstico IA:</strong> Retenção estimada alta (94%). Gancho visual aprovado!</p>
+              <button class="btn-ghost btn-sm" data-jump="calendar">Agendar no Calendário</button>
+            </div>
+            <div class="card prod-card done">
+              <span class="status-tag done">Editado · Pronto para postar</span>
+              <h4>Corte podcast: Como manter o foco</h4>
+              <p class="ai-tip">✦ <strong>Diagnóstico IA:</strong> Legendas sincronizadas e enquadramento vertical 9:16 perfeito.</p>
+              <button class="btn-ghost btn-sm" data-jump="calendar">Agendar no Calendário</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           4. CALENDÁRIO
+      ====================================================== -->
+      <section id="view-calendar" class="page-view">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Planejamento & Automação</span>
+            <h1>Calendário de Postagens</h1>
+          </div>
+          <span class="pill-niche">Novembro 2026</span>
+        </header>
+
+        <div class="calendar-layout">
+          <div class="card calendar-grid-card">
+            <div class="calendar-weekdays">
+              <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+            </div>
+            <div class="calendar-days">
+              <div class="cal-day"><span>23</span><div class="cal-event ig">IG · Tutorial 35s</div></div>
+              <div class="cal-day"><span>24</span><div class="cal-event tt">TT · Corte 42s</div></div>
+              <div class="cal-day"><span>25</span></div>
+              <div class="cal-day selected"><span>26</span><div class="cal-event multi">Multi · GRWM Café</div></div>
+              <div class="cal-day"><span>27</span></div>
+              <div class="cal-day"><span>28</span><div class="cal-event multi">Multi · Look Camisa</div></div>
+              <div class="cal-day"><span>29</span></div>
+            </div>
+          </div>
+
+          <!-- Painel de Configuração do Post Selecionado -->
+          <aside class="card calendar-inspector">
+            <h3>Agendamento Multiplataforma</h3>
+            <p class="muted-text">Mesmo vídeo com dias, horários e automação independentes por rede.</p>
+
+            <div class="form-group">
+              <label>Vídeo selecionado</label>
+              <input type="text" value="Arrume-se comigo para café produtivo" />
+            </div>
+
+            <div class="platform-schedule-box">
+              <div class="plat-row">
+                <label class="checkbox-inline"><input type="checkbox" checked /> <strong>Instagram Reels</strong></label>
+                <input type="datetime-local" value="2026-11-26T18:30" />
+              </div>
+              <div class="plat-row">
+                <label class="checkbox-inline"><input type="checkbox" checked /> <strong>TikTok</strong></label>
+                <input type="datetime-local" value="2026-11-26T20:00" />
+              </div>
+              <div class="plat-row">
+                <label class="checkbox-inline"><input type="checkbox" checked /> <strong>YouTube Shorts</strong></label>
+                <input type="datetime-local" value="2026-11-27T12:00" />
+              </div>
+            </div>
+
+            <label class="toggle-box">
+              <input type="checkbox" checked />
+              <span><strong>Postagem Automática por IA:</strong> Publicar sozinha no horário exato de cada rede.</span>
+            </label>
+
+            <label class="toggle-box">
+              <input type="checkbox" checked />
+              <span><strong>Lembrete inteligente:</strong> Notificar 30 min antes.</span>
+            </label>
+
+            <button class="btn-primary btn-full" id="btn-save-schedule">Salvar programação</button>
+          </aside>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           5. EDITOR DE VÍDEOS
+      ====================================================== -->
+      <section id="view-editor" class="page-view">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Estúdio Vertical 9:16</span>
+            <h1>Editor de Vídeos & Animação IA</h1>
+          </div>
+          <div class="header-actions">
+            <span id="editor-status-badge" class="status-tag editing">Status: Em edição</span>
+            <button class="btn-secondary" id="btn-create-ai-video">✦ Criar vídeo animado do zero</button>
+            <button class="btn-primary" id="btn-finish-video">Concluir e marcar como Editado</button>
+          </div>
+        </header>
+
+        <div class="editor-workspace">
+          <!-- Vídeos puxados da Produção -->
+          <div class="card editor-sidebar">
+            <h4>Puxados da Produção</h4>
+            <ul class="editor-queue" id="editor-queue-list">
+              <li class="active">
+                <strong>3 erros ao montar looks neutros</strong>
+                <span>Em edição</span>
+              </li>
+              <li>
+                <strong>Vlog rápido: Manhã de domingo</strong>
+                <span>Sem edição</span>
+              </li>
+              <li>
+                <strong>Organizando minha penteadeira</strong>
+                <span>Em edição</span>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Preview Vertical -->
+          <div class="card editor-canvas-card">
+            <div class="phone-frame">
+              <div class="phone-screen">
+                <span class="preview-badge">9:16 · 1080x1920</span>
+                <p id="editor-active-title" class="preview-title">3 erros ao montar looks neutros</p>
+                <div class="preview-caption">"O segredo está na textura dos tecidos neutros..."</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ferramentas de Edição -->
+          <div class="card editor-tools">
+            <h4>Ferramentas Inteligentes</h4>
+            <div class="tool-buttons">
+              <button class="tool-btn">Aa Legendas Automáticas</button>
+              <button class="tool-btn">✂ Cortes Inteligentes (IA)</button>
+              <button class="tool-btn">⊕ Zoom Dinâmico</button>
+              <button class="tool-btn">◈ Movimento & Transições</button>
+              <button class="tool-btn">🖼 Adicionar Imagens / Overlays</button>
+              <button class="tool-btn">✦ Gerar Cena Animada IA</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           6. RESULTADOS
+      ====================================================== -->
+      <section id="view-results" class="page-view">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Métricas & Monetização</span>
+            <h1>Resultados Detalhados</h1>
+          </div>
+          <select class="input-compact">
+            <option>Últimos 30 dias</option>
+            <option>Últimos 90 dias</option>
+            <option>Este ano</option>
+          </select>
+        </header>
+
+        <div class="kpi-grid-4">
+          <div class="card kpi-card">
+            <span class="kpi-label">Visualizações Totais</span>
+            <strong class="kpi-value">842.300</strong>
+            <span class="kpi-note">+18% vs mês anterior</span>
+          </div>
+          <div class="card kpi-card">
+            <span class="kpi-label">Novos Seguidores</span>
+            <strong class="kpi-value">+9.420</strong>
+            <span class="kpi-note">Total: 152,6 mil</span>
+          </div>
+          <div class="card kpi-card">
+            <span class="kpi-label">Posts Publicados</span>
+            <strong class="kpi-value">24 vídeos</strong>
+            <span class="kpi-note">Taxa média de retenção: 78%</span>
+          </div>
+          <div class="card kpi-card highlight-soft">
+            <span class="kpi-label">Faturamento Gerado</span>
+            <strong class="kpi-value">R$ 14.850,00</strong>
+            <span class="kpi-note">Publis, links afiliados e bônus</span>
+          </div>
+        </div>
+
+        <!-- Gráfico Visual em CSS + Tabela por Vídeo -->
+        <div class="results-split">
+          <div class="card chart-card">
+            <h3>Desempenho por Plataforma (Views)</h3>
+            <div class="bar-chart">
+              <div class="bar-row">
+                <span>TikTok</span>
+                <div class="bar-track"><div class="bar-fill" style="width: 85%;">410 mil</div></div>
+              </div>
+              <div class="bar-row">
+                <span>Instagram</span>
+                <div class="bar-track"><div class="bar-fill soft" style="width: 68%;">312 mil</div></div>
+              </div>
+              <div class="bar-row">
+                <span>YouTube</span>
+                <div class="bar-track"><div class="bar-fill warm" style="width: 34%;">120 mil</div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card table-card">
+            <h3>Desempenho por Vídeo Postado</h3>
+            <table class="clean-table">
+              <thead>
+                <tr>
+                  <th>Vídeo</th>
+                  <th>Rede</th>
+                  <th>Views</th>
+                  <th>Seguidores</th>
+                  <th>Faturamento</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Tutorial Make 5 min</td>
+                  <td>Instagram</td>
+                  <td>94.200</td>
+                  <td>+1.430</td>
+                  <td>R$ 4.200,00</td>
+                </tr>
+                <tr>
+                  <td>1 Camisa Branca, 3 Looks</td>
+                  <td>TikTok</td>
+                  <td>168.000</td>
+                  <td>+3.120</td>
+                  <td>R$ 6.450,00</td>
+                </tr>
+                <tr>
+                  <td>Rotina Matinal Real</td>
+                  <td>YouTube Shorts</td>
+                  <td>45.900</td>
+                  <td>+680</td>
+                  <td>R$ 1.800,00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           7. ASSISTENTE DE IA
+      ====================================================== -->
+      <section id="view-ai-assistant" class="page-view">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Copiloto Criativo</span>
+            <h1>Assistente de IA</h1>
+          </div>
+          <span class="muted-text">Converse livremente sobre roteiros, ganchos, tendências ou organização</span>
+        </header>
+
+        <div class="card chat-container">
+          <div id="chat-messages" class="chat-messages">
+            <div class="msg ai">
+              <strong>Assistente PostGun ✦</strong>
+              <p>Olá! Estou pronta para ajudar com ideias de Reels, roteiros virais, organização da sua semana ou qualquer dúvida criativa. Sobre o que vamos conversar hoje?</p>
+            </div>
+          </div>
+          <form id="chat-form" class="chat-input-bar">
+            <input type="text" id="chat-input" placeholder="Ex: Me dê 5 ideias de ganchos para um vídeo sobre autocuidado noturno..." required />
+            <button type="submit" class="btn-primary">Enviar</button>
+          </form>
+        </div>
+      </section>
+
+      <!-- =====================================================
+           8. CONFIGURAÇÕES
+      ====================================================== -->
+      <section id="view-settings" class="page-view">
+        <header class="page-header">
+          <div>
+            <span class="eyebrow">Preferências & Conexões</span>
+            <h1>Configurações</h1>
+          </div>
+        </header>
+
+        <div class="settings-grid">
+          <div class="card">
+            <h3>Redes Sociais Conectadas</h3>
+            <p class="muted-text">Gerencie permissões ou desconecte contas a qualquer momento.</p>
+            <div class="connection-list">
+              <div class="connection-item">
+                <div>
+                  <strong>Instagram (@seu.perfil)</strong>
+                  <span>Conectado · Postagem automática ativa</span>
+                </div>
+                <button class="btn-ghost btn-sm toggle-conn">Desconectar</button>
+              </div>
+              <div class="connection-item">
+                <div>
+                  <strong>TikTok (@seu.perfil)</strong>
+                  <span>Conectado · Métricas sincronizadas</span>
+                </div>
+                <button class="btn-ghost btn-sm toggle-conn">Desconectar</button>
+              </div>
+              <div class="connection-item">
+                <div>
+                  <strong>YouTube Shorts (Seu Canal)</strong>
+                  <span>Conectado · Métricas sincronizadas</span>
+                </div>
+                <button class="btn-ghost btn-sm toggle-conn">Desconectar</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3>Preferências da Plataforma</h3>
+            <div class="form-group">
+              <label>Tom de voz padrão da IA nas adaptações</label>
+              <select>
+                <option>Leve, acolhedor e magnético</option>
+                <option>Direto, educativo e elegante</option>
+                <option>Descontraído e próximo (estilo amiga)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Estilo padrão de legenda no Editor</label>
+              <select>
+                <option>Minimalista Off-White com sombra suave</option>
+                <option>Editorial Serifado Elegante</option>
+                <option>Destaque palavra por palavra</option>
+              </select>
+            </div>
+            <button class="btn-primary">Salvar preferências</button>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- =========================================================
+       MODAL PARA ADICIONAR NOVA IDEIA NO BAÚ
+  ========================================================== -->
+  <div id="idea-modal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Adicionar Nova Ideia ao Baú ✦</h3>
+        <button type="button" id="btn-close-modal" class="icon-close">✕</button>
+      </div>
+      <form id="new-idea-form">
+        <div class="form-group">
+          <label for="idea-niche-input">Nicho</label>
+          <select id="idea-niche-input" required>
+            <option value="Beleza & Autocuidado">Beleza & Autocuidado</option>
+            <option value="Moda & Estilo">Moda & Estilo</option>
+            <option value="Lifestyle & Rotina">Lifestyle & Rotina</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="idea-raw-input">Escreva sua ideia livremente (a IA vai revisar e criar o modelo de produção)</label>
+          <textarea id="idea-raw-input" rows="4" placeholder="Ex: quero gravar mostrando minha bolsa do dia a dia e o que levo pra faculdade..." required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" id="btn-cancel-modal" class="btn-ghost">Cancelar</button>
+          <button type="submit" class="btn-primary">Salvar e Adaptar com IA</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       SCRIPT DE INTERATIVIDADE (LOGIN, ABAS, BAÚ, EDITOR E CHAT)
+  ========================================================== -->
+  
+  <script>
+    // Alternar abas Login / Cadastro
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.authTab + '-form').classList.add('active');
+      });
+    });
+    
+
+    // Navegação entre telas
+    function switchView(viewId) {
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.querySelectorAll('.page-view').forEach(v => v.classList.remove('active'));
+      const navBtn = document.querySelector(`.nav-item[data-view="${viewId}"]`);
+      if (navBtn) navBtn.classList.add('active');
+      const targetView = document.getElementById('view-' + viewId);
+      if (targetView) targetView.classList.add('active');
+    }
+
+    
+    
+    document.querySelectorAll('.nav-item').forEach(btn => {
+      btn.addEventListener('click', () => switchView(btn.dataset.view));
+    });
+
+    document.querySelectorAll('[data-jump]').forEach(btn => {
+      btn.addEventListener('click', () => switchView(btn.dataset.jump));
+    });
+
+    // Modal Nova Ideia no Baú
+    const modal = document.getElementById('idea-modal');
+    const openModal = () => modal.classList.remove('hidden');
+    const closeModal = () => modal.classList.add('hidden');
+
+    document.getElementById('btn-open-idea-modal').addEventListener('click', openModal);
+    document.getElementById('btn-open-idea-modal-2').addEventListener('click', openModal);
+    document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+    document.getElementById('btn-cancel-modal').addEventListener('click', closeModal);
+
+    document.getElementById('new-idea-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const niche = document.getElementById('idea-niche-input').value;
+      const raw = document.getElementById('idea-raw-input').value.trim();
+      const corrected = raw.charAt(0).toUpperCase() + raw.slice(1).replace(/qdo/gi, 'quando').replace(/pra/gi, 'para');
+
+      const card = document.createElement('article');
+      card.className = 'card idea-card';
+      card.dataset.niche = niche;
+      card.innerHTML = `
+        <div class="idea-header">
+          <span class="pill-niche">${niche}</span>
+          <span class="idea-date">Criada hoje</span>
+        </div>
+        <div class="idea-block raw">
+          <small>Seu rascunho original:</small>
+          <p>"${raw}"</p>
+        </div>
+        <div class="idea-block ai-adapted">
+          <small>✦ Adaptação & Modelo de Produção (IA):</small>
+          <p><strong>Texto corrigido:</strong> "${corrected}"</p>
+          <ul>
+            <li><strong>Gancho (0–3s):</strong> Comece com a cena principal em movimento e texto curto na tela.</li>
+            <li><strong>Estrutura:</strong> Cortes dinâmicos a cada 2,5 segundos + trilha suave.</li>
+            <li><strong>CTA:</strong> "Comenta aqui o que você achou!"</li>
+          </ul>
+        </div>
+        <div class="idea-footer">
+          <button class="btn-secondary btn-sm">Enviar para Produção</button>
+        </div>
+      `;
+      document.getElementById('vault-list').prepend(card);
+      document.getElementById('idea-raw-input').value = '';
+      closeModal();
+      switchView('vault');
+    });
+
+    // Filtro por nicho no Baú
+    document.getElementById('vault-filter-niche').addEventListener('change', (e) => {
+      const selected = e.target.value;
+      document.querySelectorAll('.idea-card').forEach(card => {
+        card.style.display = (selected === 'all' || card.dataset.niche === selected) ? 'flex' : 'none';
+      });
+    });
+
+    // Puxar vídeo da Produção para o Editor
+    document.querySelectorAll('.btn-send-editor').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const title = btn.dataset.videoTitle;
+        document.getElementById('editor-active-title').textContent = title;
+        const statusBadge = document.getElementById('editor-status-badge');
+        statusBadge.textContent = 'Status: Em edição';
+        statusBadge.className = 'status-tag editing';
+        switchView('editor');
+      });
+    });
+
+    document.getElementById('btn-finish-video').addEventListener('click', () => {
+      const statusBadge = document.getElementById('editor-status-badge');
+      statusBadge.textContent = 'Status: Editado';
+      statusBadge.className = 'status-tag done';
+    });
+
+    document.getElementById('btn-create-ai-video').addEventListener('click', () => {
+      document.getElementById('editor-active-title').textContent = '✦ Vídeo Animado Gerado por IA';
+      const statusBadge = document.getElementById('editor-status-badge');
+      statusBadge.textContent = 'Status: Em edição';
+      statusBadge.className = 'status-tag editing';
+    });
+
+    // Assistente de IA
+    document.getElementById('chat-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const messages = document.getElementById('chat-messages');
+      messages.innerHTML += `<div class="msg user"><strong>Você</strong><p>${text}</p></div>`;
+      input.value = '';
+
+      setTimeout(() => {
+        messages.innerHTML += `
+          <div class="msg ai">
+            <strong>Assistente PostGun ✦</strong>
+            <p>Amei essa direção! Para transformar "${text}" em um vídeo curto de alta retenção, comece mostrando o resultado final nos primeiros 2 segundos, use cortes rápidos de 2 a 3 segundos e finalize com uma pergunta simples nos comentários para impulsionar o algoritmo.</p>
+          </div>
+        `;
+        messages.scrollTop = messages.scrollHeight;
+      }, 400);
+    });
+
+    // Desconectar / Reconectar redes nas Configurações
+    document.querySelectorAll('.toggle-conn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const isDisconnected = btn.textContent === 'Conectar';
+        btn.textContent = isDisconnected ? 'Desconectar' : 'Conectar';
+        btn.previousElementSibling.querySelector('span').textContent = isDisconnected
+          ? 'Conectado · Métricas sincronizadas'
+          : 'Desconectado';
+      });
+    });
+  </script>
+      // ... (último código: Desconectar / Reconectar redes)
+  </script>
+
+  <script src="auth.js"></script>
+</body>
+</html>
